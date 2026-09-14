@@ -1,0 +1,681 @@
+openapi: 3.0.3
+info:
+  title: Tanfeez
+  version: 0.1.0
+  description: >-
+    National Vision-delivery OS aligning Vision 2030 programmes, initiatives and
+    KPIs, detecting gaps, duplication and contradictions across agencies.
+  x-product-slug: ai-gov-tanfeez
+  x-source: ai-in-gov/Saudi_Vision2030_EN/
+servers:
+  - url: https://api.example.com
+tags:
+  - name: Goals
+    description: Vision themes, goals and commitments catalogue
+  - name: Programmes
+    description: Executive and Vision Realization programmes
+  - name: Initiatives
+    description: Agency initiatives with private-sector markers
+  - name: Kpis
+    description: Versioned KPI definitions and observations
+  - name: AlignmentDefects
+    description: Gaps, duplications and contradictions
+  - name: DecisionPacks
+    description: Escalations to Decision Support Center
+  - name: Reporting
+    description: Scorecards and transparency projections
+paths:
+  /v1/goals:
+    get:
+      operationId: listVisionGoals
+      tags: [Goals]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: theme
+          in: query
+          schema: { type: string, enum: [vibrant_society, thriving_economy, ambitious_nation] }
+      responses:
+        "200":
+          description: Goals page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListEnvelopeVisionGoal' }
+    post:
+      operationId: createVisionGoal
+      tags: [Goals]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VisionGoalCreate' }
+      responses:
+        "201":
+          description: Goal created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeVisionGoal' }
+  /v1/programmes:
+    get:
+      operationId: listProgrammes
+      tags: [Programmes]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        "200":
+          description: Programmes page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListEnvelopeExecutiveProgramme' }
+    post:
+      operationId: createProgramme
+      tags: [Programmes]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ExecutiveProgrammeCreate' }
+      responses:
+        "201":
+          description: Programme created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeExecutiveProgramme' }
+  /v1/initiatives:
+    get:
+      operationId: listInitiatives
+      tags: [Initiatives]
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: agencyId
+          in: query
+          schema: { type: string }
+        - name: status
+          in: query
+          schema: { type: string, enum: [draft, active, blocked, completed] }
+      responses:
+        "200":
+          description: Initiatives page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListEnvelopeInitiative' }
+    post:
+      operationId: registerInitiative
+      tags: [Initiatives]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InitiativeCreate' }
+      responses:
+        "201":
+          description: Initiative registered
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeInitiative' }
+        "422":
+          $ref: '#/components/responses/UnprocessableEntity'
+  /v1/initiatives/{initiativeId}:
+    parameters:
+      - name: initiativeId
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      operationId: getInitiative
+      tags: [Initiatives]
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Initiative
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeInitiative' }
+        "404":
+          $ref: '#/components/responses/NotFound'
+  /v1/kpi-definitions:
+    get:
+      operationId: listKpiDefinitions
+      tags: [Kpis]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        "200":
+          description: KPI definitions page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListEnvelopeKpiDefinition' }
+    post:
+      operationId: createKpiDefinition
+      tags: [Kpis]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/KpiDefinitionCreate' }
+      responses:
+        "201":
+          description: KPI definition created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeKpiDefinition' }
+  /v1/kpi-observations:
+    post:
+      operationId: postKpiObservation
+      tags: [Kpis]
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/KpiObservationCreate' }
+      responses:
+        "201":
+          description: Observation recorded
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeKpiObservation' }
+  /v1/alignment-defects:
+    get:
+      operationId: listAlignmentDefects
+      tags: [AlignmentDefects]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: defectType
+          in: query
+          schema: { type: string, enum: [gap, duplication, contradiction] }
+        - name: status
+          in: query
+          schema: { type: string, enum: [open, contested, resolved] }
+      responses:
+        "200":
+          description: Defects page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListEnvelopeAlignmentDefect' }
+    post:
+      operationId: openAlignmentDefect
+      tags: [AlignmentDefects]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AlignmentDefectCreate' }
+      responses:
+        "201":
+          description: Defect opened
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeAlignmentDefect' }
+  /v1/alignment-defects/{defectId}/resolution:
+    parameters:
+      - name: defectId
+        in: path
+        required: true
+        schema: { type: string }
+    post:
+      operationId: resolveAlignmentDefect
+      tags: [AlignmentDefects]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [outcome, rationale]
+              properties:
+                outcome: { type: string, enum: [resolved, dismissed] }
+                rationale: { type: string }
+      responses:
+        "200":
+          description: Defect resolved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeAlignmentDefect' }
+  /v1/decision-packs:
+    get:
+      operationId: listDecisionPacks
+      tags: [DecisionPacks]
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        "200":
+          description: Decision packs page
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ListEnvelopeDecisionPack' }
+    post:
+      operationId: createDecisionPack
+      tags: [DecisionPacks]
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DecisionPackCreate' }
+      responses:
+        "201":
+          description: Pack frozen for DSC
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopeDecisionPack' }
+  /v1/reports/performance-scorecard:
+    get:
+      operationId: getPerformanceScorecard
+      tags: [Reporting]
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: agencyId
+          in: query
+          schema: { type: string }
+        - name: projection
+          in: query
+          schema: { type: string, enum: [confidential, public] }
+      responses:
+        "200":
+          description: Agency or programme scorecard
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DataEnvelopePerformanceScorecard' }
+components:
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+  responses:
+    Unauthorized:
+      description: Missing or invalid credentials
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    UnprocessableEntity:
+      description: Validation failed
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Problem' }
+  schemas:
+    ResponseMeta:
+      type: object
+      required: [requestId, timestamp]
+      properties:
+        requestId: { type: string }
+        timestamp: { type: string, format: date-time }
+    Problem:
+      type: object
+      required: [type, title, status]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+
+    VisionGoal:
+      type: object
+      required: [id, theme, title, targetYear]
+      properties:
+        id: { type: string }
+        theme: { type: string, enum: [vibrant_society, thriving_economy, ambitious_nation] }
+        title: { type: string }
+        targetYear: { type: integer }
+        quantitativeTarget: { type: string }
+    VisionGoalCreate:
+      type: object
+      required: [theme, title, targetYear]
+      properties:
+        theme: { type: string, enum: [vibrant_society, thriving_economy, ambitious_nation] }
+        title: { type: string }
+        targetYear: { type: integer }
+        quantitativeTarget: { type: string }
+    ExecutiveProgramme:
+      type: object
+      required: [id, name, status]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        status: { type: string, enum: [planned, active, completed] }
+        goalIds:
+          type: array
+          items: { type: string }
+    ExecutiveProgrammeCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        goalIds:
+          type: array
+          items: { type: string }
+    Initiative:
+      type: object
+      required: [id, programmeId, agencyId, name, status]
+      properties:
+        id: { type: string }
+        programmeId: { type: string }
+        agencyId: { type: string }
+        name: { type: string }
+        goalId: { type: string }
+        status: { type: string, enum: [draft, active, blocked, completed] }
+        overallRag: { type: string, enum: [red, amber, green, blocked_false_green] }
+        privateSectorPartnership: { type: boolean }
+        sharedServiceDependencyIds:
+          type: array
+          items: { type: string }
+    InitiativeCreate:
+      type: object
+      required: [programmeId, agencyId, name, goalId]
+      properties:
+        programmeId: { type: string }
+        agencyId: { type: string }
+        name: { type: string }
+        goalId: { type: string }
+        privateSectorPartnership: { type: boolean }
+        sharedServiceDependencyIds:
+          type: array
+          items: { type: string }
+    KpiDefinition:
+      type: object
+      required: [id, initiativeId, name, version]
+      properties:
+        id: { type: string }
+        initiativeId: { type: string }
+        name: { type: string }
+        version: { type: integer }
+        unit: { type: string }
+        mandatory: { type: boolean }
+    KpiDefinitionCreate:
+      type: object
+      required: [initiativeId, name]
+      properties:
+        initiativeId: { type: string }
+        name: { type: string }
+        unit: { type: string }
+        mandatory: { type: boolean }
+    KpiObservation:
+      type: object
+      required: [id, kpiDefinitionId, value, observedAt]
+      properties:
+        id: { type: string }
+        kpiDefinitionId: { type: string }
+        value: { type: number, format: double }
+        observedAt: { type: string, format: date-time }
+        rag: { type: string, enum: [red, amber, green] }
+    KpiObservationCreate:
+      type: object
+      required: [kpiDefinitionId, value, observedAt]
+      properties:
+        kpiDefinitionId: { type: string }
+        value: { type: number, format: double }
+        observedAt: { type: string, format: date-time }
+        rag: { type: string, enum: [red, amber, green] }
+    AlignmentDefect:
+      type: object
+      required: [id, defectType, status, summary]
+      properties:
+        id: { type: string }
+        defectType: { type: string, enum: [gap, duplication, contradiction] }
+        status: { type: string, enum: [open, contested, resolved] }
+        summary: { type: string }
+        initiativeIds:
+          type: array
+          items: { type: string }
+        resolutionDeadline: { type: string, format: date-time }
+    AlignmentDefectCreate:
+      type: object
+      required: [defectType, summary]
+      properties:
+        defectType: { type: string, enum: [gap, duplication, contradiction] }
+        summary: { type: string }
+        initiativeIds:
+          type: array
+          items: { type: string }
+        resolutionDeadline: { type: string, format: date-time }
+    DecisionPack:
+      type: object
+      required: [id, title, status]
+      properties:
+        id: { type: string }
+        title: { type: string }
+        status: { type: string, enum: [frozen, under_review, closed] }
+        initiativeId: { type: string }
+        defectId: { type: string }
+        evidenceSnapshotRef: { type: string }
+        createdAt: { type: string, format: date-time }
+    DecisionPackCreate:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string }
+        initiativeId: { type: string }
+        defectId: { type: string }
+    PerformanceScorecard:
+      type: object
+      properties:
+        agencyId: { type: string }
+        projection: { type: string, enum: [confidential, public] }
+        initiativesActive: { type: integer }
+        initiativesBlockedFalseGreen: { type: integer }
+        openDefects: { type: integer }
+        goalsCovered: { type: integer }
+        goalsWithoutInitiative: { type: integer }
+
+    DataEnvelopeVisionGoal:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/VisionGoal' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+    ListEnvelopeVisionGoal:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/VisionGoal' }
+            nextCursor: { type: string }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+
+
+    DataEnvelopeExecutiveProgramme:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/ExecutiveProgramme' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+    ListEnvelopeExecutiveProgramme:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/ExecutiveProgramme' }
+            nextCursor: { type: string }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+
+
+    DataEnvelopeInitiative:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/Initiative' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+    ListEnvelopeInitiative:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Initiative' }
+            nextCursor: { type: string }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+
+
+    DataEnvelopeKpiDefinition:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/KpiDefinition' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+    ListEnvelopeKpiDefinition:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/KpiDefinition' }
+            nextCursor: { type: string }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+
+
+    DataEnvelopeKpiObservation:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/KpiObservation' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+    ListEnvelopeKpiObservation:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/KpiObservation' }
+            nextCursor: { type: string }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+
+
+    DataEnvelopeAlignmentDefect:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/AlignmentDefect' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+    ListEnvelopeAlignmentDefect:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/AlignmentDefect' }
+            nextCursor: { type: string }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+
+
+    DataEnvelopeDecisionPack:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/DecisionPack' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+    ListEnvelopeDecisionPack:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/DecisionPack' }
+            nextCursor: { type: string }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+
+
+    DataEnvelopePerformanceScorecard:
+      type: object
+      required: [data, meta]
+      properties:
+        data: { $ref: '#/components/schemas/PerformanceScorecard' }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+    ListEnvelopePerformanceScorecard:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/PerformanceScorecard' }
+            nextCursor: { type: string }
+        meta: { $ref: '#/components/schemas/ResponseMeta' }
+
